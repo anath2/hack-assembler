@@ -1,4 +1,4 @@
-/// Hack assembly language parser:
+/// Parser:
 /// Parses each line in the assembly code
 ///
 /// For each line:
