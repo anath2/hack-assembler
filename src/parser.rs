@@ -23,6 +23,26 @@ fn parse_line(line: String) {
 }
 
 
-fn get_type(line: str) {
+fn trim_line(line: String) {
+    // Removes whitespaces and comments from the instruction
+}
 
+
+fn get_instruction_type(line: String) -> char{
+    // Checks for A instruction, C instruction or L instruction
+}
+
+
+fn get_destination_c(line: String) -> String {
+    // Gets destination if it is a C instruction
+}
+
+
+fn get_computation_c(line: String) -> String {
+    // Gets computation mneumonic if it's a C instruction
+}
+
+
+fn get_jump_c(line: String) {
+    // Gets jump  if it's a c instruction
 }
