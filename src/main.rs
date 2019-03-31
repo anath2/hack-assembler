@@ -56,9 +56,9 @@ mod parser {
         let line_iter = line_iter.filter(|l| l.len() > 0);
 
         for (linenum, line) in line_iter.enumerate() {
-            let ln = line.to_string();
-            let i_type = get_instruction_type(ln);
-            println!("{} - {} - {}", linenum, i_type, line);
+            let i_type = get_instruction_type(&line);
+            let dest = get_dest(&line, &i_type);
+            println!("{} - {} - {} - {}", linenum, i_type, dest, line);
         }
     }
 
@@ -66,35 +66,33 @@ mod parser {
     fn remove_comments(line: String) -> String {
         // Removes comments from a line of code
         let split: Vec<&str> = line.split("//").collect();
-        let clean_str = split[0];
-        clean_str.to_string()
+        let clean_str = split[0].to_string();
+        clean_str
     }
 
 
-    fn get_instruction_type(line: String) -> &'static str {
+    fn get_instruction_type(line: &String) -> String {
         // Checks whether it is A, L or C type instruction
         let char_vect: Vec<char> = line.chars().collect();
         let first_char = char_vect[0];
 
         if first_char == '@' {
-            "A"
+            "A".to_string()
         } else if first_char == '(' {
-            "L"
+            "L".to_string()
         } else {
-            "C"
+            "C".to_string()
         }
     }
 
 
-    fn get_dest(line: String, inst_type: &str) -> &'static str {
+    fn get_dest(line: &String, inst_type: &String) -> String {
         // Get destination for the instruction
-        let mut dest = "";
-
         if inst_type == "C" {
             let split: Vec<&str> = line.split("=").collect();
-            dest = split[0];
+            split[0].to_string()
+        } else {
+            "".to_string()
         }
-
-        dest
     }
 }
