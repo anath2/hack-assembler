@@ -52,42 +52,26 @@ mod parser {
         // Parses the assembly file line by line and
         // returns a vector of ParsedLine
         let line_iter = f_content.split("\n");
-        let mut line_iter = line_iter.map(|l| l.trim());
-        line_iter = line_iter.map(|l|
-                                  {
-                                      l.trim();
-                                      remove_comments(l);
-                                  }
-
-        );
+        let line_iter = line_iter.map(|l| remove_comments(l.trim().to_string()));
         let line_iter = line_iter.filter(|l| l.len() > 0);
 
         for (linenum, line) in line_iter.enumerate() {
-            let i_type = get_instruction_type(line);
+            let ln = line.to_string();
+            let i_type = get_instruction_type(ln);
             println!("{} - {} - {}", linenum, i_type, line);
         }
     }
 
 
-    // fn clean_line(line: &str) -> &'static str {
-    //     line = line.trim();
-    //     let char_vect: Vec<char> = line.chars().collect();
-    //     let mut clean_line = String::new();
-    // }
-
-    fn remove_comments(line: &str) -> String {
-        let chars  = line.chars();
-        let mut cleaned = String::new();
-
-        for (idx, ch) in chars.enumerate() {
-            cleaned.push_str(&ch.to_string());
-        }
-
-        cleaned
+    fn remove_comments(line: String) -> String {
+        // Removes comments from a line of code
+        let split: Vec<&str> = line.split("//").collect();
+        let clean_str = split[0];
+        clean_str.to_string()
     }
 
 
-    fn get_instruction_type(line: &str) -> &'static str {
+    fn get_instruction_type(line: String) -> &'static str {
         // Checks whether it is A, L or C type instruction
         let char_vect: Vec<char> = line.chars().collect();
         let first_char = char_vect[0];
@@ -99,5 +83,18 @@ mod parser {
         } else {
             "C"
         }
+    }
+
+
+    fn get_dest(line: String, inst_type: &str) -> &'static str {
+        // Get destination for the instruction
+        let mut dest = "";
+
+        if inst_type == "C" {
+            let split: Vec<&str> = line.split("=").collect();
+            dest = split[0];
+        }
+
+        dest
     }
 }
