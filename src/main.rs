@@ -7,6 +7,8 @@ use std::io;
 use std::env;
 use std::fs;
 
+mod parser;
+
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -33,66 +35,4 @@ fn read_assembly(asm_f: String) -> Result<String, io::Error> {
     }
 
     fs::read_to_string(asm_f)
-}
-
-
-mod parser {
-
-    struct ParsedLine {
-        line: String,  // Line number associated with the line
-        inst: String,  // Instruction type whether A, L or C
-        symb: String,  // Symbol if it is an A instruction or Label
-        dest: String,  // Destination for a C instruction
-        comp: String,  // Computation if it's a C instruction
-        jump: String   // Jump if it is an C instructionj
-    }
-
-
-    pub fn parse_content(f_content: String) {
-        // Parses the assembly file line by line and
-        // returns a vector of ParsedLine
-        let line_iter = f_content.split("\n");
-        let line_iter = line_iter.map(|l| remove_comments(l.trim().to_string()));
-        let line_iter = line_iter.filter(|l| l.len() > 0);
-
-        for (linenum, line) in line_iter.enumerate() {
-            let i_type = get_instruction_type(&line);
-            let dest = get_dest(&line, &i_type);
-            println!("{} - {} - {} - {}", linenum, i_type, dest, line);
-        }
-    }
-
-
-    fn remove_comments(line: String) -> String {
-        // Removes comments from a line of code
-        let split: Vec<&str> = line.split("//").collect();
-        let clean_str = split[0].to_string();
-        clean_str
-    }
-
-
-    fn get_instruction_type(line: &String) -> String {
-        // Checks whether it is A, L or C type instruction
-        let char_vect: Vec<char> = line.chars().collect();
-        let first_char = char_vect[0];
-
-        if first_char == '@' {
-            "A".to_string()
-        } else if first_char == '(' {
-            "L".to_string()
-        } else {
-            "C".to_string()
-        }
-    }
-
-
-    fn get_dest(line: &String, inst_type: &String) -> String {
-        // Get destination for the instruction
-        if inst_type == "C" {
-            let split: Vec<&str> = line.split("=").collect();
-            split[0].to_string()
-        } else {
-            "".to_string()
-        }
-    }
 }
