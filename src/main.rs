@@ -7,6 +7,8 @@ use std::io;
 use std::env;
 use std::fs;
 
+extern crate regex;
+
 mod parser;
 
 

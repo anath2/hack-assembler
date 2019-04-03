@@ -12,6 +12,9 @@
 /// Assume that the code has no syntax errors
 
 
+use regex::Regex;
+
+
 struct ParsedLine {
     line: String,  // Line number associated with the line
     inst: String,  // Instruction type whether A, L or C
@@ -39,9 +42,9 @@ pub fn parse_content(f_content: String) {
 
 fn remove_comments(line: String) -> String {
     // Removes comments from a line of code
-    let split: Vec<&str> = line.split("//").collect();
-    let clean_str = split[0].to_string();
-    clean_str
+    let r = Regex::new(r"^.*(//.*)$").unwrap();
+    let cleaned = r.replace_all(&line, "").to_string();
+    cleaned
 }
 
 
