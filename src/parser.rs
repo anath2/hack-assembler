@@ -3,14 +3,13 @@
 /// Assume that the code has no syntax errors
 
 use regex::Regex;
-use lazy_static
 
 
 lazy_static! {
-    static COMMENT_REGEX: Regex = Regex::new(r"^.*(//.*)$").unwrap();
-    static A_INSTRUCTION: Regex = Regex::new(r"^@(.+)$").unwrap();
-    static L_INSTRUCTION: Regex = Regex::new(r"\((.+)\)$").unwrap();
-    static C_INSTRUCTION: Regex = Regex::new(r"^(.+)(?:=?)(.+)(?:;?)(.+)$").unwrap();
+    static ref COMMENT_REGEX: Regex = Regex::new(r"^.*(//.*)$").unwrap();
+    static ref A_INSTRUCTION: Regex = Regex::new(r"^@(.+)$").unwrap();
+    static ref L_INSTRUCTION: Regex = Regex::new(r"\((.+)\)$").unwrap();
+    static ref C_INSTRUCTION: Regex = Regex::new(r"^(.+)(?:=?)(.+)(?:;?)(.+)$").unwrap();
 }
 
 
@@ -28,6 +27,7 @@ pub fn parse_content(f_content: String) -> Vec<ParsedLine> {
 
     parsed
 }
+
 
 
 pub struct ParsedLine {
