@@ -8,6 +8,7 @@ use std::env;
 use std::fs;
 
 extern crate regex;
+extern crate lazy_static;
 
 mod parser;
 
