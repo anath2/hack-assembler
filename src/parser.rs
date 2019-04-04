@@ -56,18 +56,14 @@ pub struct ParsedLine {
 impl ParsedLine {
     pub fn new(lno: u32, line: String) -> ParsedLine {
         // Parses a line and returns a parsed dict
-        let line = line.trim().to_string();
         let inst = get_instruction_type(&line);
 
-        ParsedLine {
-            line: lno,
-            inst: inst,
-            addr: "".to_string(),
-            label: "".to_string(),
-            dest: "".to_string(),
-            comp: "".to_string(),
-            jump: "".to_string()
+        match inst.as_str() {
+            "A" => parse_a_instruction(lno, line),
+            "L" => parse_l_instruction(lno, line),
+            "C" => parse_c_instruction(lno, line)
         }
+
     }
 }
 
