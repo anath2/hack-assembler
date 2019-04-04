@@ -19,15 +19,27 @@ pub fn parse_content(f_content: String) -> Vec<ParsedLine> {
     let mut parsed: Vec<ParsedLine> = Vec::new();
 
     for (lno, line) in lines.enumerate() {
-        let lno = lno as u32;
-        let line = line.to_string();
-        let p = ParsedLine::new(lno, line);
-        parsed.push(p)
+        let line = remove_comments(line);
+        let line = line.trim();
+
+        if line.len() > 0 {
+            let lno = lno as u32;
+            let line = line.to_string();
+            let p = ParsedLine::new(lno, line);
+            parsed.push(p)
+        }
+
     }
 
     parsed
 }
 
+
+fn remove_comments(line: &str) -> String {
+    // Removes comments from a line of code
+    let cleaned = COMMENT_REGEX.replace_all(line, "").to_string();
+    cleaned
+}
 
 
 pub struct ParsedLine {
@@ -44,12 +56,12 @@ pub struct ParsedLine {
 impl ParsedLine {
     pub fn new(lno: u32, line: String) -> ParsedLine {
         // Parses a line and returns a parsed dict
-        let line = remove_comments(line);
         let line = line.trim().to_string();
+        let inst = get_instruction_type(&line);
 
         ParsedLine {
             line: lno,
-            inst: "".to_string(),
+            inst: inst,
             addr: "".to_string(),
             label: "".to_string(),
             dest: "".to_string(),
@@ -60,8 +72,11 @@ impl ParsedLine {
 }
 
 
-fn remove_comments(line: String) -> String {
-    // Removes comments from a line of code
-    let cleaned = COMMENT_REGEX.replace_all(&line, "").to_string();
-    cleaned
+
+fn get_instruction_type(line: &String) -> String {
+    match line {
+        line if A_INSTRUCTION.is_match(line) => "A".to_string(),
+        line if L_INSTRUCTION.is_match(line) => "L".to_string(),
+        _ => "C".to_string()
+    }
 }
