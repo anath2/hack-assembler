@@ -23,7 +23,7 @@ pub fn parse_content(f_content: String) -> Vec<ParsedLine> {
         let line = line.trim();
 
         if line.len() > 0 {
-            let lno = lno as u32;
+            let lno = lno as u16;
             let line = line.to_string();
             let p = ParsedLine::new(lno, line);
             parsed.push(p)
@@ -43,36 +43,107 @@ fn remove_comments(line: &str) -> String {
 
 
 pub struct ParsedLine {
-    line:  u32,     // Line number associated with the line
-    inst:  String,  // Instruction type whether A, L or C
-    addr:  String,  // Address in case of an A instruction
+    line:  u16,     // Line number associated with the line
+    inst:  String,  // Instruction type
+    addr:  i32,     // Address in case of an A instruction
     dest:  String,  // Destination for a C instruction
     comp:  String,  // Computation if it's a C instruction
     jump:  String,  // Jump if it is an C instructionj
-    label: String,  // Symbol if it is a Label
+    symb:  String,  // Symbol if it is a L or A instruction
 }
 
 
 impl ParsedLine {
-    pub fn new(lno: u32, line: String) -> ParsedLine {
+    pub fn new(lno: u16, line: String) -> ParsedLine {
         // Parses a line and returns a parsed dict
-        let inst = get_instruction_type(&line);
 
-        match inst.as_str() {
-            "A" => parse_a_instruction(lno, line),
-            "L" => parse_l_instruction(lno, line),
-            "C" => parse_c_instruction(lno, line)
+        let inst = match get_instruction_type(&line) {
+            Ok(inst) => inst.as_str(),  // Return a reference
+            Err(e) => panic!("Line an error occurred parsing {:?}", e)
+        };
+
+        match inst {
+            "A" => parse_a_instruction(lno, &line),
+            "L"=> parse_l_instruction(lno, &line),
+            _   => parse_c_instruction(lno, &line),
         }
-
     }
 }
 
 
 
-fn get_instruction_type(line: &String) -> String {
+fn get_instruction_type(line: &String) -> Result<String, &str> {
     match line {
-        line if A_INSTRUCTION.is_match(line) => "A".to_string(),
-        line if L_INSTRUCTION.is_match(line) => "L".to_string(),
-        _ => "C".to_string()
+        line if A_INSTRUCTION.is_match(line) => Ok("A".to_string()),
+        line if L_INSTRUCTION.is_match(line) => Ok("L".to_string()),
+        line if C_INSTRUCTION.is_match(line) => Ok("C".to_string()),
+        _ => Err("Unknown Instruction type")
+    }
+}
+
+
+fn parse_a_instruction(lno: u16, line: &String) -> ParsedLine {
+    // Parses Instruction of A type
+    let caps = A_INSTRUCTION.captures(line).unwrap();
+    let addr = caps.get(1).map_or("", |a| a.as_str()).trim();
+
+    // If addr is not a line add it as a symbol
+    let parsed = match addr.parse() {
+        Ok(v) => ParsedLine {
+            line:  lno,
+            inst:  "A".to_string(),
+            addr:  v,
+            dest:  "".to_string(),
+            comp:  "".to_string(),
+            jump:  "".to_string(),
+            symb:  "".to_string()
+        },
+        Err(_) => ParsedLine {
+            line:  lno,
+            inst:  "A".to_string(),
+            addr:  -1,  // -1 indicating unknown address
+            dest:  "".to_string(),
+            comp:  "".to_string(),
+            jump:  "".to_string(),
+            symb:  addr.to_string()
+        }
+    };
+
+    parsed
+}
+
+
+fn parse_l_instruction(lno: u16, line: &String) -> ParsedLine {
+    // Parses Instruction of L type
+    let caps = L_INSTRUCTION.captures(line).unwrap();
+    let label = caps.get(1).map_or("", |a| a.as_str().trim());
+
+    ParsedLine {
+        line:  lno + 1,  // Label always points to the next line number
+        inst:  "L".to_string(),
+        addr:  -1,
+        dest:  "".to_string(),
+        comp:  "".to_string(),
+        jump:  "".to_string(),
+        symb:  label.to_string()
+    }
+}
+
+
+fn parse_c_instruction(lno: u16, line: &String) -> ParsedLine{
+    // Parses a C instruction
+    let caps = C_INSTRUCTION.captures(line).unwrap();
+    let dest = caps.get(1).map_or("", |d| d.as_str().trim());
+    let comp = caps.get(2).map_or("", |c| c.as_str().trim());
+    let jump = caps.get(3).map_or("", |j| j.as_str().trim());
+
+    ParsedLine {
+        line:  lno,
+        inst:  "C".to_string(),
+        addr:  -1,
+        dest:  dest.to_string(),
+        comp:  comp.to_string(),
+        jump:  jump.to_string(),
+        symb:  "".to_string()
     }
 }
