@@ -54,29 +54,32 @@ pub struct ParsedLine {
 
 
 impl ParsedLine {
+
     pub fn new(lno: u16, line: String) -> ParsedLine {
         // Parses a line and returns a parsed dict
+        let inst_res = get_instruction_type(&line);
 
-        let inst = match get_instruction_type(&line) {
-            Ok(inst) => inst.as_str(),  // Return a reference
-            Err(e) => panic!("Line an error occurred parsing {:?}", e)
-        };
+        if inst_res.is_ok() {
+            let inst = inst_res.unwrap();
 
-        match inst {
-            "A" => parse_a_instruction(lno, &line),
-            "L"=> parse_l_instruction(lno, &line),
-            _   => parse_c_instruction(lno, &line),
+            match inst {
+                "A" => parse_a_instruction(lno, &line),
+                "L"=> parse_l_instruction(lno, &line),
+                _   => parse_c_instruction(lno, &line),
+            }
+
+        } else {
+            panic!("Syntax error on line number {}", lno);
         }
     }
 }
 
 
-
-fn get_instruction_type(line: &String) -> Result<String, &str> {
+fn get_instruction_type(line: &String) -> Result<&str, &str> {
     match line {
-        line if A_INSTRUCTION.is_match(line) => Ok("A".to_string()),
-        line if L_INSTRUCTION.is_match(line) => Ok("L".to_string()),
-        line if C_INSTRUCTION.is_match(line) => Ok("C".to_string()),
+        line if A_INSTRUCTION.is_match(line) => Ok("A"),
+        line if L_INSTRUCTION.is_match(line) => Ok("L"),
+        line if C_INSTRUCTION.is_match(line) => Ok("C"),
         _ => Err("Unknown Instruction type")
     }
 }
