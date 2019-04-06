@@ -9,7 +9,7 @@ lazy_static! {
     static ref COMMENT_REGEX: Regex = Regex::new(r"^.*(//.*)$").unwrap();
     static ref A_INSTRUCTION: Regex = Regex::new(r"^@(.+)$").unwrap();
     static ref L_INSTRUCTION: Regex = Regex::new(r"\((.+)\)$").unwrap();
-    static ref C_INSTRUCTION: Regex = Regex::new(r"^(.+)(?:=?)(.+)(?:;?)(.+)$").unwrap();
+    static ref C_INSTRUCTION: Regex = Regex::new(r"^(\w{1, 2})=?(.+)?;?(\w{3})?$").unwrap();
 }
 
 
@@ -25,8 +25,10 @@ pub fn parse_content(f_content: String) -> Vec<ParsedLine> {
         if line.len() > 0 {
             let lno = lno as u16;
             let line = line.to_string();
+            println!("{}", &line);
             let p = ParsedLine::new(lno, line);
-            parsed.push(p)
+            println!("{:?}", p);
+            parsed.push(p);
         }
 
     }
@@ -42,6 +44,7 @@ fn remove_comments(line: &str) -> String {
 }
 
 
+#[derive(Debug)]
 pub struct ParsedLine {
     line:  u16,     // Line number associated with the line
     inst:  String,  // Instruction type
