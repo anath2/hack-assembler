@@ -25,9 +25,7 @@ pub fn parse_content(f_content: String) -> Vec<ParsedLine> {
         if line.len() > 0 {
             let lno = lno as u16;
             let line = line.to_string();
-            println!("{}", &line);
             let p = ParsedLine::new(lno, line);
-            println!("{:?}", p);
             parsed.push(p);
         }
 
@@ -44,7 +42,6 @@ fn remove_comments(line: &str) -> String {
 }
 
 
-#[derive(Debug)]
 pub struct ParsedLine {
     line:  u16,     // Line number associated with the line
     inst:  String,  // Instruction type
