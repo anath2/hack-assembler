@@ -15,6 +15,8 @@
 /// A type instructions have the most significant bit set to zero and a
 /// 15 bit address
 
+mod parser;
+
 
 struct comp {
     "0"  :   "101010",
@@ -60,6 +62,33 @@ struct jump {
 };
 
 
-fn translate_address(addr: u: 32) {
-    // Translates address from integer to binary string
+pub fn decode (parsed: Vec<ParsedLine>) {
+    // Translates parsed assembly language code into
+    // machine language
+    let mut decoded = String::new();
+
+    for line in &parsed {
+        let decoded_line = match line.inst.as_str() {
+            "A" => decode_a(line) + "\n";
+            "C" => decode_c(line) + "\n"
+            _   => ""  // Ignore other instruction types
+        };
+
+        if decoded_line.len() > 0 {
+            decoded.push_str(decoded_line);
+        }
+
+}
+
+
+fn decode_a(parsed_line: ParsedLine) -> &str {
+    // Translates A instructions to machine code
+    let binary_str = format!("{:b}", parsed_line.addr);
+    return binary_str
+}
+
+
+fn decode_c(parsed_line: ParsedLine) -> &str {
+    // Translates C instructions to machine code
+
 }
