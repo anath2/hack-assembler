@@ -63,32 +63,104 @@ struct jump {
 
 
 pub fn decode (parsed: Vec<ParsedLine>) {
-    // Translates parsed assembly language code into
+    // Translates parsed assembly language code into uuu
     // machine language
     let mut decoded = String::new();
 
     for line in &parsed {
         let decoded_line = match line.inst.as_str() {
-            "A" => decode_a(line) + "\n";
-            "C" => decode_c(line) + "\n"
+            "A" => decode_a(line) + "\n",
+            "C" => decode_c(line) + "\n",
             _   => ""  // Ignore other instruction types
         };
 
         if decoded_line.len() > 0 {
             decoded.push_str(decoded_line);
         }
+    }
 
+    decoded
 }
 
 
 fn decode_a(parsed_line: ParsedLine) -> &str {
     // Translates A instructions to machine code
-    let binary_str = format!("{:b}", parsed_line.addr);
-    return binary_str
+    let binary_str = format!("{:015b}", parsed_line.addr);  // Since address is 15 bits
+
+    "0" + binary_str
 }
 
 
 fn decode_c(parsed_line: ParsedLine) -> &str {
     // Translates C instructions to machine code
+    let dest_bits = decode_dest(parsed_line);
+    let comp_bits = decode_comp(parsed_line);
+    let jump_bits = decode_jump(parsed_line);
 
+    "111" + dest_bits + comp_bits + jump_bits
+}
+
+
+fn decode_dest(parsed_line: ParsedLine) -> &str {
+    let dest = parsed_line.dest.trim();
+
+    match dest {
+        "M"  => "001",
+        "D"  => "010",
+        "MD" => "011",
+        "A"  => "100",
+        "AM" => "101",
+        "AD" => "110",
+        "AMD"=> "111"
+    }
+}
+
+
+fn decode_comp(parsed_line: ParsedLine) -> &str {
+    // Clean up the comp string
+    let comp_chars = parsed_line.comp.chars();
+    let filtered = comp_chars.filter(|x| *x != ' ');
+
+    let mut cleaned_string = String::new();
+
+    for c in filtered {
+        cleaned_string.push(f);
+    }
+
+    match cleaned_string.as_str() {
+        "0"   =>   "101010",
+        "1"   =>   "111111",
+        "-1"  =>   "111110",
+        "D"   =>   "001100",
+        "A"   =>   "110000",
+        "!D"  =>   "001101",
+        "!A"  =>   "110001",
+        "-D"  =>   "001111",
+        "-A"  =>   "110011",
+        "D+1" =>   "011111",
+        "A+1" =>   "110111",
+        "D-1" =>   "001110",
+        "A-1" =>   "110010",
+        "D+A" =>   "000010",
+        "D-A" =>   "010011",
+        "A-D" =>   "000111",
+        "D&A" =>   "000000",
+        "D|A" =>   "010101"
+    }
+
+}
+
+
+fn decode_jump(parsed_line: ParsedLine) -> &str {
+    let jump = parsed_line.jump.trim();
+
+    match jump {
+        "JGT": "001",
+        "JEQ": "010",
+        "JGE": "011",
+        "JLT": "100",
+        "JNE": "101",
+        "JLE": "110",
+        "JMP": "111"
+    }
 }
