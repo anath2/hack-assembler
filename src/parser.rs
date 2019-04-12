@@ -13,6 +13,9 @@ lazy_static! {
 }
 
 
+enum Instruction {A, C, L}
+
+
 pub fn parse_content(f_content: String) -> Vec<ParsedLine> {
     // Parses lines of assembly code
     let lines = f_content.split("\n");
