@@ -6,14 +6,18 @@ use regex::Regex;
 
 
 lazy_static! {
-    static ref COMMENT_REGEX: Regex = Regex::new(r"^.*(//.*)$").unwrap();
+     static ref COMMENT_REGEX: Regex = Regex::new(r"^.*(//.*)$").unwrap();
     static ref A_INSTRUCTION: Regex = Regex::new(r"^@(.+)$").unwrap();
     static ref L_INSTRUCTION: Regex = Regex::new(r"\((.+)\)$").unwrap();
     static ref C_INSTRUCTION: Regex = Regex::new(r"^(\w{1, 2})=?(.+)?;?(\w{3})?$").unwrap();
 }
 
 
-enum Instruction {A, C, L}
+enum Instruction {
+    A {symbol: String, address: usize},
+    C {dest: String, comp: String, jump: String},
+    L {symbol: String}
+}
 
 
 pub fn parse_content(f_content: String) -> Vec<ParsedLine> {
