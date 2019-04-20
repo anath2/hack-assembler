@@ -3,33 +3,27 @@
 /// on hack computer can be found at: https://www.nand2tetris.org
 
 
-use std::io;
-use std::env;
-use std::fs;
-
-extern crate regex;
-#[macro_use(lazy_static)]
-extern crate lazy_static;
-
-mod parser;
+use std::{env, process};
 
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {panic!("Bad arguments - expected file path")};
+    // Application entry point
 
-    let asm_f = args[1].to_string();
-    let contents = read_assembly(asm_f).expect("Something went wrong");
+    let args = parse_arguments().unwrap_or_else(|err| {
+        eprintln!("{}", err);
+        process::exit(1);
+    });
 
-    parser::parse_content(contents);
 }
 
 
-fn read_assembly(asm_f: String) -> Result<String, io::Error> {
-    let temp_f = asm_f.clone();
-    let parts: Vec<&str> = temp_f.split(".").collect();
+fn parse_arguments() -> Result <Vec<String>, &'static str> {
+    // Parse assembly code arguments
+    let args: Vec<String> = env::args().collect();
 
-    if parts.len() != 2 || parts[1] != "asm" {panic!("Bad input file! {}\n", temp_f)}
-
-    fs::read_to_string(asm_f)
+    if args.len() < 2 {
+        Err("Invalid command-line arguments")
+    } else {
+        Ok(args)
+    }
 }

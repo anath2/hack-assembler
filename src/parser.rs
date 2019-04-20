@@ -14,9 +14,9 @@ lazy_static! {
 
 
 enum Instruction {
-    A {symbol: String, address: usize},
-    C {dest: String, comp: String, jump: String},
-    L {symbol: String}
+    A {line_number: usize, symbol: String, address: usize},
+    C {line_number: usize, dest: String, comp: String, jump: String},
+    L {line_number: usize, symbol: String}
 }
 
 
