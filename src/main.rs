@@ -2,8 +2,10 @@
 /// Translates hack assembly language code to machine instructions. More information
 /// on hack computer can be found at: https://www.nand2tetris.org
 
+extern crate assembler;
 
-use std::{env, process};
+use std::{env, process, fs};
+use assembler::Assembler;
 
 
 fn main() {
@@ -14,6 +16,14 @@ fn main() {
         process::exit(1);
     });
 
+    let filepath = &args[1];  // Passed in as command line argument
+
+    let contents = fs::read_to_string(filepath.as_str()).unwrap_or_else(|err| {
+        eprintln!("An error occurred reading file - {}", err);
+        process::exit(1);
+    });
+
+    println!("File contents {}", contents);
 }
 
 
