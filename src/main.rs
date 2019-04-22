@@ -23,17 +23,17 @@ fn main() {
         process::exit(1);
     });
 
-    println!("File contents {}", contents);
+
 }
 
 
-fn parse_arguments() -> Result <Vec<String>, &'static str> {
-    // Parse assembly code arguments
-    let args: Vec<String> = env::args().collect();
+fn parse_arguments() -> result <vec<string>, &'static str> {
+    // parse assembly code arguments
+    let args: vec<string> = env::args().collect();
 
     if args.len() < 2 {
-        Err("Invalid command-line arguments")
+        err("invalid command-line arguments")
     } else {
-        Ok(args)
+        ok(args)
     }
 }

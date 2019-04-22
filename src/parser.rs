@@ -6,7 +6,7 @@ use regex::Regex;
 
 
 lazy_static! {
-     static ref COMMENT_REGEX: Regex = Regex::new(r"^.*(//.*)$").unwrap();
+    static ref COMMENT_REGEX: Regex = Regex::new(r"^.*(//.*)$").unwrap();
     static ref A_INSTRUCTION: Regex = Regex::new(r"^@(.+)$").unwrap();
     static ref L_INSTRUCTION: Regex = Regex::new(r"\((.+)\)$").unwrap();
     static ref C_INSTRUCTION: Regex = Regex::new(r"^(\w{1, 2})=?(.+)?;?(\w{3})?$").unwrap();
@@ -84,7 +84,7 @@ impl ParsedLine {
 
 fn get_instruction_type(line: &String) -> Result<&str, &str> {
     match line {
-        line if A_INSTRUCTION.is_match(line) => Ok("A"),
+        line if A__INSTRUCTION.is_match(line) => Ok("A"),
         line if L_INSTRUCTION.is_match(line) => Ok("L"),
         line if C_INSTRUCTION.is_match(line) => Ok("C"),
         _ => Err("Unknown Instruction type")
