@@ -26,13 +26,13 @@ fn main() {
 }
 
 
-fn parse_arguments() -> result <vec<string>, &'static str> {
+fn parse_arguments() -> Result<Vec<String>, &'static str> {
     // parse assembly code arguments
-    let args: vec<string> = env::args().collect();
+    let args: Vec<String> = env::args().collect();
 
     if args.len() < 2 {
-        err("invalid command-line arguments")
+        Err("invalid command-line arguments")
     } else {
-        ok(args)
+        Ok(args)
     }
 }

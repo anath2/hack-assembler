@@ -9,40 +9,40 @@ pub struct Assembler<'a> {
 }
 
 
-impl<'a> Assembler<'a> {
+// impl<'a> Assembler<'a> {
 
-    pub fn translate(assembly: &'a str) -> Assembler<'a> {
-        // Translate assembly code into machine instructions
-    }
+//     pub fn translate(assembly: &'a str) -> Assembler<'a> {
+//         // Translate assembly code into machine instructions
+//     }
 
-}
+// }
 
 
-pub mod Parser {
+pub mod parser {
     use regex::{Regex, Captures};
     use std::process;
     use std::collections::HashMap;
     // Define line parsing structs
 
-    struct A_instruction {
+    pub struct A_instruction {
         lnum: usize,
         symbol: Option<String>,
         address: Option<usize>,
     }
 
-    struct L_instruction {
+    pub struct L_instruction {
         lnum: usize,
         symbol: String,
     }
 
-    struct C_instruction {
+    pub struct C_instruction {
         lnum: usize,
         dest: Option<String>,
         comp: Option<String>,
         jump: Option<String>,
     }
 
-    enum Instruction {
+    pub enum Instruction {
         A(A_instruction),
         L(L_instruction),
         C(C_instruction)
@@ -50,14 +50,14 @@ pub mod Parser {
 
     pub fn parse(contents: &String) -> Vec<Instruction> {
         // Declare regex for matching file types
-        let comment_regex = Regex::new(r"^.*(//.*)$").unwrap();
+        let contents = remove_comments(contents);
 
-        let instruction_regex = HashMap::new();
+        let mut instruction_regex = HashMap::new();
         instruction_regex.insert("A", Regex::new(r"^@(.+)$").unwrap());
         instruction_regex.insert("L", Regex::new(r"\((.+)\)$").unwrap());
         instruction_regex.insert("C", Regex::new(r"^(\w{1, 2})=?(.+)?;?(\w{3})?$").unwrap());
 
-        let mut parsed: Vec<Instruction>;
+        let mut parsed: Vec<Instruction> = Vec::new();
 
         for (lnum, line) in contents.lines().enumerate() {
 
@@ -69,10 +69,10 @@ pub mod Parser {
                     let parsed_line = match inst {
                         "A" => parse_a(lnum, caps),
                         "L" => parse_l(lnum, caps),
-                        "C" => parse_c(lnum, caps)
+                         _ => parse_c(lnum, caps)
                     };
 
-                    parsed.push(parsed_line)
+                    parsed.push(parsed_line);
 
                 } else {
                     eprintln!("An error occurred parsing line - {}", &line);
@@ -82,6 +82,20 @@ pub mod Parser {
         }
 
         parsed
+    }
+
+    fn remove_comments(code: &String) -> String {
+        // Removes comments from code comments are of the form
+        // // - Code till end of line
+        let comment_regex = Regex::new(r"^.*(//.*)$").unwrap();
+        let mut result = String::new();
+
+        for line in code.lines() {
+            let cleaned = comment_regex.replace_all(line, "");
+            result.push_str(cleaned.trim());
+        }
+
+        result
     }
 
     fn parse_a(lnum: usize, caps: Captures) -> Instruction {
@@ -140,7 +154,8 @@ mod tests {
 
     #[test]
     fn instruction_type() {
-        let a_inst = "@1";
+        let code = String::from("@1");
+        let parsed = parser::parse(&code);
     }
 
 }
