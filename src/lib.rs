@@ -19,8 +19,9 @@ impl<'a> Assembler<'a> {
 
 
 pub mod Parser {
-    use regex::Regex;
+    use regex::{Regex, Captures};
     use std::process;
+    use std::collections::HashMap;
     // Define line parsing structs
 
     struct A_instruction {
@@ -37,7 +38,7 @@ pub mod Parser {
     struct C_instruction {
         lnum: usize,
         dest: Option<String>,
-        comp: String,
+        comp: Option<String>,
         jump: Option<String>,
     }
 
@@ -51,60 +52,51 @@ pub mod Parser {
         // Declare regex for matching file types
         let comment_regex = Regex::new(r"^.*(//.*)$").unwrap();
 
+        let instruction_regex = HashMap::new();
+        instruction_regex.insert("A", Regex::new(r"^@(.+)$").unwrap());
+        instruction_regex.insert("L", Regex::new(r"\((.+)\)$").unwrap());
+        instruction_regex.insert("C", Regex::new(r"^(\w{1, 2})=?(.+)?;?(\w{3})?$").unwrap());
 
         let mut parsed: Vec<Instruction>;
 
         for (lnum, line) in contents.lines().enumerate() {
-            let inst = get_instruction_type(line).unwrap_or_else(|err| {
-                eprintln!("Error occcurred parsing - {}", err);
-                process::exit(1);
-            });
 
-            let parsed_line = match inst {
-                "A" => parse_a(lnum, &line),
-                "L" => parse_l(lnum, &line),
-                "C" => parse_c(lnum, &line),
-            };
+            for (&inst, regex) in &instruction_regex {
 
-            parsed.push(parsed_line);
+                if regex.is_match(&line) {
+                    let caps = regex.captures(line).unwrap();
+
+                    let parsed_line = match inst {
+                        "A" => parse_a(lnum, caps),
+                        "L" => parse_l(lnum, caps),
+                        "C" => parse_c(lnum, caps)
+                    };
+
+                    parsed.push(parsed_line)
+
+                } else {
+                    eprintln!("An error occurred parsing line - {}", &line);
+                    process::exit(1);
+                }
+            }
         }
 
         parsed
     }
 
-    pub fn get_instruction_type<'a>(line: &'a str) -> Result<&'a str, &'static str> {
-        // Matches lines with regular expressions for instructions
-        // If no match raises an error
-        let a_regex = Regex::new(r"^@(.+)$").unwrap();
-        let l_regex = Regex::new(r"\((.+)\)$").unwrap();
-        let c_regex = Regex::new(r"^(\w{1, 2})=?(.+)?;?(\w{3})?$").unwrap();
-
-        if a_regex.is_match(line) {
-            Ok("A")
-        } else if l_regex.is_match(line) {
-            Ok("L")
-        } else if c_regex.is_match(line) {
-            Ok("C")
-        } else {
-            let err_msg = format!("Syntax error in line - {}", line);
-            Err(err_msg.as_str())
-        }
-    }
-
-    fn parse_a(lnum: usize, line: &str) -> Instruction {
+    fn parse_a(lnum: usize, caps: Captures) -> Instruction {
         // Parse A instructions
         // A instruction: @1
-        let split: Vec<&str> = line.split("@").collect();
-        let address_string = String::from(split[1]);
+        let address_str = caps.get(1).unwrap().as_str().trim();
 
-        let address = match address_string.parse() {
+        let address = match address_str.parse() {
             Ok(v) => Some(v),
             Err(_) => None
         };
 
         let symbol = match address {
             Some(_) => None,
-            None => Some(address_string)
+            None => Some(String::from(address_str))
         };
 
         Instruction::A(A_instruction {
@@ -114,12 +106,30 @@ pub mod Parser {
         })
     }
 
-    fn  parse_l(lnum: usize, line: &str) -> Instruction {
+    fn  parse_l(lnum: usize, caps: Captures) -> Instruction {
         // Parse L
+        // L instruction: (LABEL_NAME)
+        let label = caps.get(1).unwrap().as_str().trim();
+
+        Instruction::L(L_instruction {
+            lnum: lnum + 1,
+            symbol: String::from(label),
+        })
     }
 
-    fn parse_c(lnum: usize, line: &str) -> Instruction {
+    fn parse_c(lnum: usize, caps: Captures) -> Instruction {
         // Parse C
+        // C instruction: A = M + 1; JMP
+        let dest = caps.get(1).map_or(None, |d| Some(String::from(d.as_str().trim())));
+        let comp = caps.get(2).map_or(None, |c| Some(String::from(c.as_str().trim())));
+        let jump = caps.get(3).map_or(None, |j| Some(String::from(j.as_str().trim())));
+
+        Instruction::C(C_instruction{
+            lnum,
+            dest,
+            comp,
+            jump
+        })
     }
 }
 
@@ -131,11 +141,6 @@ mod tests {
     #[test]
     fn instruction_type() {
         let a_inst = "@1";
-
-        assert_eq!(
-            "A",
-            Parser::get_instruction_type(a_inst).unwrap()
-        );
     }
 
 }
