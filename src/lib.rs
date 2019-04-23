@@ -24,21 +24,21 @@ pub mod Parser {
     // Define line parsing structs
 
     struct A_instruction {
-        line: usize,
-        symbol: String,
-        address: usize,
+        lnum: usize,
+        symbol: Option<String>,
+        address: Option<usize>,
     }
 
     struct L_instruction {
-        line: usize,
+        lnum: usize,
         symbol: String,
     }
 
     struct C_instruction {
-        line: usize,
-        dest: String,
+        lnum: usize,
+        dest: Option<String>,
         comp: String,
-        jump: String,
+        jump: Option<String>,
     }
 
     enum Instruction {
@@ -54,16 +54,16 @@ pub mod Parser {
 
         let mut parsed: Vec<Instruction>;
 
-        for line in contents.lines() {
+        for (lnum, line) in contents.lines().enumerate() {
             let inst = get_instruction_type(line).unwrap_or_else(|err| {
                 eprintln!("Error occcurred parsing - {}", err);
                 process::exit(1);
             });
 
             let parsed_line = match inst {
-                "A" => parse_a(&line),
-                "L" => parse_l(&line),
-                "C" => parse_c(&line),
+                "A" => parse_a(lnum, &line),
+                "L" => parse_l(lnum, &line),
+                "C" => parse_c(lnum, &line),
             };
 
             parsed.push(parsed_line);
@@ -72,7 +72,7 @@ pub mod Parser {
         parsed
     }
 
-    fn get_instruction_type<'a>(line: &'a str) -> Result<&'a str, &'static str> {
+    pub fn get_instruction_type<'a>(line: &'a str) -> Result<&'a str, &'static str> {
         // Matches lines with regular expressions for instructions
         // If no match raises an error
         let a_regex = Regex::new(r"^@(.+)$").unwrap();
@@ -91,15 +91,51 @@ pub mod Parser {
         }
     }
 
-    fn parse_a(line: &str) -> Instruction {
-        // Parse A
+    fn parse_a(lnum: usize, line: &str) -> Instruction {
+        // Parse A instructions
+        // A instruction: @1
+        let split: Vec<&str> = line.split("@").collect();
+        let address_string = String::from(split[1]);
+
+        let address = match address_string.parse() {
+            Ok(v) => Some(v),
+            Err(_) => None
+        };
+
+        let symbol = match address {
+            Some(_) => None,
+            None => Some(address_string)
+        };
+
+        Instruction::A(A_instruction {
+            lnum,
+            address,
+            symbol
+        })
     }
 
-    fn  parse_l(line: &str) -> Instruction {
+    fn  parse_l(lnum: usize, line: &str) -> Instruction {
         // Parse L
     }
 
-    fn parse_c(line: &str) -> Instruction {
+    fn parse_c(lnum: usize, line: &str) -> Instruction {
         // Parse C
     }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn instruction_type() {
+        let a_inst = "@1";
+
+        assert_eq!(
+            "A",
+            Parser::get_instruction_type(a_inst).unwrap()
+        );
+    }
+
 }
