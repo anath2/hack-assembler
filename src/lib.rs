@@ -2,7 +2,7 @@
 
 extern crate regex;
 
-
+#[allow(dead_code)]
 pub struct Assembler<'a> {
     assembly: &'a str,
     machine: String,
@@ -22,76 +22,63 @@ pub mod parser {
     use regex::{Regex, Captures};
     use std::process;
     use std::collections::HashMap;
-    // Define line parsing structs
-
-    pub struct A_instruction {
-        lnum: usize,
-        symbol: Option<String>,
-        address: Option<usize>,
-    }
-
-    pub struct L_instruction {
-        lnum: usize,
-        symbol: String,
-    }
-
-    pub struct C_instruction {
-        lnum: usize,
-        dest: Option<String>,
-        comp: Option<String>,
-        jump: Option<String>,
-    }
 
     pub enum Instruction {
-        A(A_instruction),
-        L(L_instruction),
-        C(C_instruction)
+        A {lnum: usize, symbol: Option<String>, address: Option<usize>},
+        L {lnum: usize, symbol: String},
+        C {lnum: usize, dest: Option<String>, comp: Option<String>, jump: Option<String>}
     }
 
     pub fn parse(contents: &String) -> Vec<Instruction> {
         // Declare regex for matching file types
         let contents = remove_comments(contents);
-
-        let mut instruction_regex = HashMap::new();
-        instruction_regex.insert("A", Regex::new(r"^@(.+)$").unwrap());
-        instruction_regex.insert("L", Regex::new(r"\((.+)\)$").unwrap());
-        instruction_regex.insert("C", Regex::new(r"^(\w{1, 2})=?(.+)?;?(\w{3})?$").unwrap());
-
+        let instruction_regex = get_regex_hashmap();
         let mut parsed: Vec<Instruction> = Vec::new();
 
         for (lnum, line) in contents.lines().enumerate() {
+            let some = instruction_regex.iter().find(|(_, regex)| regex.is_match(line));
 
-            for (&inst, regex) in &instruction_regex {
+            let parsed_line = match some {
 
-                if regex.is_match(&line) {
+                Some((&inst, regex)) => {
                     let caps = regex.captures(line).unwrap();
 
-                    let parsed_line = match inst {
+                    match inst {
                         "A" => parse_a(lnum, caps),
                         "L" => parse_l(lnum, caps),
-                         _ => parse_c(lnum, caps)
-                    };
-
-                    parsed.push(parsed_line);
-
-                } else {
+                        _ => parse_c(lnum, caps)
+                    }
+                },
+                None => {
+                    // None of the regular expression matching is probably a syntax error
                     eprintln!("An error occurred parsing line - {}", &line);
-                    process::exit(1);
-                }
-            }
+                    process::exit(1)
+                },
+            };
+
+            parsed.push(parsed_line);
         }
 
         parsed
     }
 
-    fn remove_comments(code: &String) -> String {
+    fn get_regex_hashmap() -> HashMap<&'static str, Regex> {
+        // Creates a hashmap for parsing different instruction types
+        let mut instruction_regex = HashMap::new();
+        instruction_regex.insert("A", Regex::new(r"^@(.+)$").unwrap());
+        instruction_regex.insert("L", Regex::new(r"\((.+)\)$").unwrap());
+        instruction_regex.insert("C", Regex::new(r"^(\w{1, 2})=?(.+)?;?(\w{3})?$").unwrap());
+        instruction_regex
+    }
+
+    pub fn remove_comments(code: &String) -> String {
         // Removes comments from code comments are of the form
         // // - Code till end of line
-        let comment_regex = Regex::new(r"^.*(//.*)$").unwrap();
+        let comment_regex = Regex::new(r"^(?P<code>.*)(?P<comment>//.*)$").unwrap();
         let mut result = String::new();
 
         for line in code.lines() {
-            let cleaned = comment_regex.replace_all(line, "");
+            let cleaned = comment_regex.replace_all(line, "${code}");
             result.push_str(cleaned.trim());
         }
 
@@ -113,11 +100,11 @@ pub mod parser {
             None => Some(String::from(address_str))
         };
 
-        Instruction::A(A_instruction {
-            lnum,
-            address,
-            symbol
-        })
+        Instruction::A {
+            lnum: lnum,
+            address: address,
+            symbol: symbol,
+        }
     }
 
     fn  parse_l(lnum: usize, caps: Captures) -> Instruction {
@@ -125,10 +112,10 @@ pub mod parser {
         // L instruction: (LABEL_NAME)
         let label = caps.get(1).unwrap().as_str().trim();
 
-        Instruction::L(L_instruction {
+        Instruction::L {
             lnum: lnum + 1,
             symbol: String::from(label),
-        })
+        }
     }
 
     fn parse_c(lnum: usize, caps: Captures) -> Instruction {
@@ -138,12 +125,12 @@ pub mod parser {
         let comp = caps.get(2).map_or(None, |c| Some(String::from(c.as_str().trim())));
         let jump = caps.get(3).map_or(None, |j| Some(String::from(j.as_str().trim())));
 
-        Instruction::C(C_instruction{
+        Instruction::C {
             lnum,
             dest,
             comp,
             jump
-        })
+        }
     }
 }
 
@@ -153,9 +140,34 @@ mod tests {
     use super::*;
 
     #[test]
-    fn instruction_type() {
-        let code = String::from("@1");
-        let parsed = parser::parse(&code);
+    fn remove_comments() {
+        let code_line = String::from("@1// @1");
+        let cleaned = parser::remove_comments(&code_line);
+        assert_eq!(cleaned, String::from("@1"));
     }
 
+    #[test]
+    fn parse_a() {
+        let code = String::from("@1 // @1");
+        let parsed = parser::parse(&code);
+        for parsed_line in parsed {
+            if let parser::Instruction::A {lnum: l, address:a, symbol: s} = parsed_line {
+                assert_eq!(l, 0 as usize);
+                assert_eq!(a, Some(1));
+                assert_eq!(s, None);
+            }
+        }
+    }
+
+    #[test]
+    fn parse_l() {
+        let code = String::from("(LABEL)");
+        let parsed = parser::parse(&code);
+        for parsed_line in parsed {
+            if let parser::Instruction::L {lnum: l, symbol: s} = parsed_line {
+                assert_eq!(l, 1 as usize);
+                assert_eq!(s, "LABEL");
+            }
+        }
+    }
 }
