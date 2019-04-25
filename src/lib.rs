@@ -2,20 +2,25 @@
 
 extern crate regex;
 
-#[allow(dead_code)]
+
 pub struct Assembler<'a> {
     assembly: &'a str,
     machine: String,
 }
 
 
-// impl<'a> Assembler<'a> {
+impl<'a> Assembler<'a> {
 
-//     pub fn translate(assembly: &'a str) -> Assembler<'a> {
-//         // Translate assembly code into machine instructions
-//     }
+    pub fn translate(assembly: &'a str) -> Assembler<'a> {
+        let parsed = parser::parse(assembly);
+        let decoded = decoder::decode(parsed);
 
-// }
+        Assembler {
+            assembly,
+            machine: decoded
+        }
+    }
+}
 
 
 pub mod parser {
@@ -32,7 +37,7 @@ pub mod parser {
         C {lnum: usize, dest: Option<String>, comp: Option<String>, jump: Option<String>}
     }
 
-    pub fn parse(contents: &String) -> Vec<Instruction> {
+    pub fn parse<'a>(contents: &'a str) -> Vec<Instruction> {
         // Declare regex for matching file types
         let mut parsed: Vec<Instruction> = Vec::new();
 
