@@ -3,26 +3,6 @@
 extern crate regex;
 
 
-pub struct Assembler<'a> {
-    assembly: &'a str,
-    machine: String,
-}
-
-
-impl<'a> Assembler<'a> {
-
-    pub fn translate(assembly: &'a str) -> Assembler<'a> {
-        let parsed = parser::parse(assembly);
-        let decoded = decoder::decode(parsed);
-
-        Assembler {
-            assembly,
-            machine: decoded
-        }
-    }
-}
-
-
 pub mod parser {
     /// Converts hack azssembly code into tokens to be decoded into
     /// binary code by the decoder
@@ -201,7 +181,7 @@ mod parser_tests {
 }
 
 
-mod decoder {
+pub mod decoder {
     /// Decoder traslates parsed assembly code into machine language
     use std::process;
     use parser::Instruction;
