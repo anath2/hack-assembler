@@ -19,6 +19,9 @@ pub struct Assembler<'a> {
 
 
 pub mod parser {
+    /// Converts hack azssembly code into tokens to be decoded into
+    /// binary code by the decoder
+
     use regex::{Regex, Captures};
     use std::process;
     use std::collections::HashMap;
@@ -160,7 +163,7 @@ pub mod parser {
 
 
 #[cfg(test)]
-mod tests {
+mod parser_tests {
     use super::*;
 
     #[test]
@@ -188,6 +191,49 @@ mod tests {
                 assert_eq!(*j, Some(String::from("JMP")));
             }
         }
+    }
+
+}
+
+
+mod decoder {
+    /// Decoder traslates parsed assembly code into machine language
+    use std::process;
+    use parser::Instruction;
+
+    pub fn decode(assembly: Vec<Instruction>) -> String {
+        // Decode parsed assembly language code into binary
+        let mut decoded = String::new();
+
+        for parsed_line in assembly {
+
+            let decoded_line = match parsed_line {
+                Instruction::A {address: a, ..} => decode_a(a),
+                Instruction::C {dest: d, comp: c, jump: j, ..} => decode_c(d, c, j)
+            };
+
+            let decoded_line = format!("{}\n", &decoded_line).as_str();
+            decoded.push_str(decoded_line);
+        }
+
+        decoded
+    }
+
+    fn decode_a(a: Option<usize>) -> String {
+        // Translates A instructions to machine code
+
+        let addr = a.unwrap_or_else(|| {
+            eprintln!("Unable to decode, address is None");
+            process::exit(1);
+        });
+
+        format!("0{:015b}", addr)
+    }
+
+    fn decode_c(dest: Option<String>, comp: Option<String>, jump: Option<String>) -> String {
+        // Translate c instruction into binary
+
+
     }
 
 }
