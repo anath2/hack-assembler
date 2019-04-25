@@ -207,13 +207,17 @@ mod decoder {
 
         for parsed_line in assembly {
 
-            let decoded_line = match parsed_line {
-                Instruction::A {address: a, ..} => decode_a(a),
-                Instruction::C {dest: d, comp: c, jump: j, ..} => decode_c(d, c, j)
+            match parsed_line {
+                Instruction::A {address: a, ..} => {
+                    let decoded_line = format!("{}\n", decode_a(a).as_str());
+                    decoded.push_str(&decoded_line);
+                },
+                Instruction::C {dest: d, comp: c, jump: j, ..} => {
+                    let decoded_line = format!("{}\n", decode_c(d, c, j).as_str());
+                    decoded.push_str(&decoded_line);
+                },
+                _ => {continue;},
             };
-
-            let decoded_line = format!("{}\n", &decoded_line).as_str();
-            decoded.push_str(decoded_line);
         }
 
         decoded
@@ -232,8 +236,89 @@ mod decoder {
 
     fn decode_c(dest: Option<String>, comp: Option<String>, jump: Option<String>) -> String {
         // Translate c instruction into binary
+        let decoded_d = match dest{
+            Some(s) => {
+                let d = s.as_str();
+                match d {
+                    "M" => "001",
+                    "D" => "010",
+                    "MD" => "011",
+                    "A"  => "100",
+                    "AM" => "101",
+                    "AD" => "110",
+                    "AMD"=> "111",
+                    _ => {
+                        eprintln!("Cannot decode - unknown destination - {}", d);
+                        process::exit(1);
+                    },
+                }
+            },
+            None => ""
+        };
 
+        let decoded_c = match comp {
+            Some(c) => {
+                let c = c.as_str();
+                match c {
+                    "0" => "0101010",
+                    "1" => "0111111",
+                    "D" => "0001100",
+                    "A" => "0110000",
+                    "M" => "1110000",
+                    "-1" => "0111110",
+                    "!D" => "0001101",
+                    "!A" => "0110001",
+                    "!M" => "1110001",
+                    "-D" => "0001111",
+                    "-A" => "0110011",
+                    "-M" => "1110011",
+                    "D+1" => "0011111",
+                    "A+1" => "0110111",
+                    "M+1" => "1110111",
+                    "D-1" => "0001110",
+                    "A-1" => "0110010",
+                    "D+A" => "0000010",
+                    "D-A" => "0010011",
+                    "A-D" => "0000111",
+                    "D&A" => "0000000",
+                    "D|A" => "0010101",
+                    "M-1" => "1110010",
+                    "D+M" => "1000010",
+                    "D-M" => "1010011",
+                    "M-D" => "1000111",
+                    "D&M" => "1000000",
+                    "D|M" => "1010101",
+                    _ => {
+                        eprintln!("Cannot decode - unknown computation - {}", c);
+                        process::exit(1);
+                    },
+                }
+            },
+            None => ""
+        };
 
+        let decoded_j = match jump {
+            Some(j) => {
+                let j = j.as_str();
+                match j {
+                    "JGT" => "001",
+                    "JEQ" => "010",
+                    "JGE" => "011",
+                    "JLT" => "100",
+                    "JNE" => "101",
+                    "JLE" => "110",
+                    "JMP" => "111",
+                    _ => {
+                        eprintln!("Cannot decode - unknown jump - {}", j);
+                        process::exit(1);
+                    },
+                }
+            },
+            None => ""
+        };
+
+        let decoded_c = format!("111{}{}{}", decoded_c, decoded_d, decoded_j);
+        String::from(decoded_c)
     }
 
 }
