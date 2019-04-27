@@ -147,6 +147,20 @@ pub mod parser {
 }
 
 
+pub mod symbol_table {
+    pub struct Symbol {
+        name: String,
+        value: usize
+    }
+
+    fn create(code: &String) -> Vec<Symbol> {
+        // Creates a new symbol table from assembly
+        // language code
+    }
+
+}
+
+
 #[cfg(test)]
 mod parser_tests {
     use super::*;
