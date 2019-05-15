@@ -148,50 +148,34 @@ pub mod parser {
 
 
 pub mod symbol_table {
-    pub struct Symbol {
-        name: String,
-        value: usize
-    }
+    use regex::Regex;
+    use std::collections::HashMap;
 
-    fn create(code: &String) -> Vec<Symbol> {
-        // Creates a new symbol table from assembly
-        // language code
-    }
+    fn create(code: &String) -> HashMap<String, usize> {
+        // Creates a new symbol table from
+        //assembly  code
+        let symbol_inst = Regex::new(r"^@(?P<symbol>\D.*)$").unwrap();
+        let mem_assign = Regex::new(r"^M=?P<address>\d+$").unwrap();
+        let code_iter = code.lines();
+        let mut symbol_table = HashMap::new();
 
-}
+        while let Some(line) = code_iter.next() {
+            if symbol_inst.is_match(line) {
+                let caps = symbol_inst.captures(line).unwrap();
+                let symbol_name = caps.name("symbol").unwrap();
 
-
-#[cfg(test)]
-mod parser_tests {
-    use super::*;
-
-    #[test]
-    fn parse() {
-        let code = String::from(
-            "@1 // @1\n(LABEL)\nA = M + 1; JMP"
-        );
-
-        let parsed = parser::parse(&code);
-
-        for parsed_line in parsed {
-            if let parser::Instruction::A {lnum: l, address:a, symbol: s} = &parsed_line {
-                assert_eq!(*l, 0 as usize);
-                assert_eq!(*a, Some(1));
-                assert_eq!(*s, None);
-            }
-            if let parser::Instruction::L {lnum: l, symbol: s} = &parsed_line {
-                assert_eq!(*l, 2 as usize);
-                assert_eq!(*s, "LABEL");
-            }
-            if let parser::Instruction::C {lnum: l, dest: d, comp: c, jump: j} = &parsed_line {
-                assert_eq!(*l, 2 as usize);
-                assert_eq!(*d, Some(String::from("A")));
-                assert_eq!(*c, Some(String::from("M+1")));
-                assert_eq!(*j, Some(String::from("JMP")));
+                while let Some(line) = code_iter.next() {
+                    if mem_assign.is_match(line) {
+                        let caps = symbol_inst.captures(line).unwrap();
+                        let address = caps.name("address").unwrap();
+                        symbol_table.insert(symbol_name, address);
+                    }
+                }
             }
         }
-    }
 
+        symbol_table
+    }
 }
 
 
@@ -318,6 +302,22 @@ pub mod decoder {
 
         let decoded_c = format!("111{}{}{}", decoded_c, decoded_d, decoded_j);
         String::from(decoded_c)
+    }
+
+}
+
+
+#[cfg(test)]
+mod parser_tests {
+    use super::*;
+
+
+    #[test]
+    fn decode() {
+        let decode_input = "@1 // @1\n(LABEL)\nA = M + 1; JMP";
+        let parsed = parser::parse(&decode_input);
+        let decoded = decoder::decode(parsed);
+        assert_eq!(decoded, "0000000000000001\n1111110111100111\n");
     }
 
 }
