@@ -149,26 +149,25 @@ pub mod parser {
 
 pub mod symbol_table {
     use regex::Regex;
-    use std::collections::HashMap;
 
-    fn create(code: &String) -> HashMap<String, usize> {
+    fn create(code: &String) -> Vec<(String, usize)>{
         // Creates a new symbol table from
         //assembly  code
+        let mut symbol_table:Vec<(String, usize)> = Vec::new();
         let symbol_inst = Regex::new(r"^@(?P<symbol>\D.*)$").unwrap();
         let mem_assign = Regex::new(r"^M=?P<address>\d+$").unwrap();
-        let code_iter = code.lines();
-        let mut symbol_table = HashMap::new();
+        let mut code_iter = code.lines();
 
         while let Some(line) = code_iter.next() {
             if symbol_inst.is_match(line) {
                 let caps = symbol_inst.captures(line).unwrap();
-                let symbol_name = caps.name("symbol").unwrap();
+                let symbol_name = caps.name("symbol").unwrap().as_str();
 
                 while let Some(line) = code_iter.next() {
                     if mem_assign.is_match(line) {
                         let caps = symbol_inst.captures(line).unwrap();
-                        let address = caps.name("address").unwrap();
-                        symbol_table.insert(symbol_name, address);
+                        let address = caps.name("address").unwrap().as_str().parse().unwrap();
+                        symbol_table.push((String::from(symbol_name), address))
                     }
                 }
             }
